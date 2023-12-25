@@ -15,7 +15,6 @@ const crypto = require("crypto");
 
 puppeteer.use(StealthPlugin());
 
-// Create new express application & set handlebars as view engine
 const app = express();
 const { exec } = require('child_process');
 app.set("view engine", "hbs");
