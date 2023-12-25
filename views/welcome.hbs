@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Etsy API Connector - Welcome</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            padding: 2rem;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+        }
+        h1 {
+            margin-bottom: 2rem;
+        }
+        .btn {
+            margin: 0.5rem auto;
+        }
+        ol {
+            text-align: left;
+            list-style: none;
+            counter-reset: my-awesome-counter;
+            padding-left: 0;
+        }
+        ol li {
+            counter-increment: my-awesome-counter;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 1rem;
+            position: relative;
+            padding-left: 40px;
+        }
+        ol li::before {
+            content: counter(my-awesome-counter);
+            color: white;
+            background: #d3d3d3;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: -30px;
+        }
+        .action-step {
+            animation: pulse 1s 1;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0,123,255,.5); }
+            70% { box-shadow: 0 0 0 10px rgba(0,123,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
+        }
+        p.success-message {
+            color: darkgreen;
+            font-size: 1.0rem;
+        }
+        p.failure-message {
+            color: darkred;
+            font-size: 1.0rem;
+        }
+        p.warning-message {
+            color: orange;
+            font-size: 1.0rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 9999; cursor: pointer;">
+        <div style="position: absolute; top: 50%; left: 50%; font-size: 50px; color: white; transform: translate(-50%,-50%);">
+            <i class="fa fa-spinner fa-spin"></i>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Welcome, {{first_name_hbs}}!</h1>
+        <ol>
+            <li class="action-step">
+                <p>Create a new template file from your existing listings.</p>
+                <form action="/createListingsSpreadsheet" method="get">
+                    <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
+                    <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
+                    <input type="hidden" name="first_name" value="{{first_name_hbs}}" />
+                    <button type="submit" class="btn btn-primary mb-2">Create Template</button>
+                </form>
+                {{#if templateCreated}}
+                    <p class="success-message">Listing template successfully created at : {{fileName}}</p>
+                {{/if}}
+            </li>
+            <li class="action-step">
+                <p><b>Keyword Research</b></p>
+                <p>First log in to eRank, then run the research.</p>
+                <form action="/login" method="get">
+                    <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
+                    <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
+                    <input type="hidden" name="first_name" value="{{first_name_hbs}}" />
+                    <button type="submit" class="btn btn-primary mb-2">Login to eRank</button>
+                </form>
+                {{#if loggedIn}}
+                    <p class="success-message">Logged in</p>
+                {{/if}}
+                <div style="border-bottom: 1px solid #c5c5c5; padding-bottom: 0.5rem; margin-bottom: 0.5rem;"></div>
+                <form action="/scrapeErank" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
+                    <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
+                    <input type="hidden" name="first_name" value="{{first_name_hbs}}" />
+                    <input type="file" name="csvfile" accept=".csv" required />
+                    <button type="submit" class="btn btn-primary mb-2">Run eRank Research</button>
+                </form>
+                {{#if erankScraped}}
+                    <p class="success-message">eRank Research completed at: {{fileName}}</p>
+                {{/if}}
+            </li>
+            <li class="action-step">
+                <p><b>Update Etsy</b></p>
+                <p>Choose a .csv file for updating Etsy <b>titles/tags</b></p>
+                <form action="/updateTitlesTagsEtsy" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
+                    <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
+                    <input type="hidden" name="first_name" value="{{first_name_hbs}}" />
+                    <input type="file" name="csvfile" accept=".csv" required />
+                    <button type="submit" class="btn btn-primary mb-2">Update Etsy Titles/Tags</button>
+                </form>
+                {{#if titlesTagsUpdated}}
+                    <p class="success-message">Etsy titles and tags successfully updated</p>
+                {{/if}}
+                <div style="display: flex; align-items: center; margin: 20px 0;">
+                    <hr style="flex-grow: 1; border-top: 1px solid #000;">
+                    <span style="margin: 0 10px;">OR</span>
+                    <hr style="flex-grow: 1; border-top: 1px solid #000;">
+                </div>
+                <p>Choose a .csv file for updating Etsy listing <b>images</b></p>
+                <form action="/updateImagesEtsy" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
+                    <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
+                    <input type="hidden" name="first_name" value="{{first_name_hbs}}" />
+                    <input type="file" name="csvfile" accept=".csv" required />
+                    <button type="submit" class="btn btn-primary mb-2">Update Etsy Images</button>
+                </form>
+                {{#if imagesUpdated}}
+                    <p class="success-message">Etsy images successfully updated</p>
+                {{/if}}
+                {{#if csvErrorsArray}}
+                    <p class="failure-message"><b>The following errors were found in the .csv file, please fix and try again:</b></p>
+                    {{#each csvErrorsArray}}
+                        <p class="failure-message">{{this}}</p>
+                    {{/each}}
+                {{/if}}
+                {{#if errorsArray}}
+                    <p class="failure-message"><b>There were issues uploading the images for some of the rows:</b></p>
+                    {{#each errorsArray}}
+                        <p class="failure-message">{{this}}</p>
+                    {{/each}}
+                {{/if}}
+            </li>
+        </ol>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('form').submit(function() {
+                $('#overlay').show();
+            });
+        });
+    </script>
+</body>
+</html>
