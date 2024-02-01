@@ -125,7 +125,7 @@
             </li>
             <li class="action-step">
                 <p><b>Update Etsy</b></p>
-                <p>Choose a .csv file for updating Etsy <b>titles/tags</b></p>
+                <p><b>Titles/Tags: </b>Choose a .csv file for updating Etsy titles/tags</p>
                 <form action="/updateTitlesTagsEtsy" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
                     <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
@@ -141,7 +141,7 @@
                     <span style="margin: 0 10px;">OR</span>
                     <hr style="flex-grow: 1; border-top: 1px solid #000;">
                 </div>
-                <p>Choose a .csv file for updating Etsy listing <b>images</b></p>
+                <p><b>Images: </b>Choose a .csv file for updating Etsy listing images</p>
                 <form action="/updateImagesEtsy" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
                     <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
@@ -161,6 +161,34 @@
                 {{#if errorsArray}}
                     <p class="failure-message"><b>There were issues uploading the images for some of the rows:</b></p>
                     {{#each errorsArray}}
+                        <p class="failure-message">{{this}}</p>
+                    {{/each}}
+                {{/if}}
+                <div style="display: flex; align-items: center; margin: 20px 0;">
+                    <hr style="flex-grow: 1; border-top: 1px solid #000;">
+                    <span style="margin: 0 10px;">OR</span>
+                    <hr style="flex-grow: 1; border-top: 1px solid #000;">
+                </div>
+                <p><b>Videos: </b>Choose a .csv file for updating Etsy listing videos</p>
+                <form action="/updateVideosEtsy" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="access_token" value="{{access_token_hbs}}" />
+                    <input type="hidden" name="shop_id" value="{{shop_id_hbs}}" />
+                    <input type="hidden" name="first_name" value="{{first_name_hbs}}" />
+                    <input type="file" name="csvfile" accept=".csv" required />
+                    <button type="submit" class="btn btn-primary mb-2">Update Etsy Videos</button>
+                </form>
+                {{#if videosUpdated}}
+                    <p class="success-message">Etsy video/s successfully updated</p>
+                {{/if}}
+                {{#if videoCsvErrorsArray}}
+                    <p class="failure-message"><b>The following errors were found in the .csv file, please fix and try again:</b></p>
+                    {{#each videoCsvErrorsArray}}
+                        <p class="failure-message">{{this}}</p>
+                    {{/each}}
+                {{/if}}
+                {{#if videoErrorsArray}}
+                    <p class="failure-message"><b>There were issues uploading the video/s for some of the rows:</b></p>
+                    {{#each videoErrorsArray}}
                         <p class="failure-message">{{this}}</p>
                     {{/each}}
                 {{/if}}

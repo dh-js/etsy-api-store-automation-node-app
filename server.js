@@ -12,6 +12,7 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const FormData = require('form-data');
 const crypto = require("crypto");
+const videoApiCall = require('./apiUtils');
 
 puppeteer.use(StealthPlugin());
 
@@ -250,6 +251,7 @@ app.get('/createListingsSpreadsheet', async (req, res) => {
         header: [
             {id: 'id', title: 'Product ID'},
             {id: 'mockupfolder', title: 'Mockups Folder'},
+            {id: 'videofile', title: 'Video File'},
             {id: 'title', title: 'Product Title'},
             {id: 'tag1', title: 'Tag 1'},
             {id: 'tag2', title: 'Tag 2'},
@@ -651,6 +653,10 @@ app.post("/updateImagesEtsy", upload.single('csvfile'), async (req, res) => {
     let formData;
     let image_listing_id;
 
+    let videoFilePath;
+    let videoFileData;
+    let videoFormData;
+
     const errorsArray = [];
 
 
@@ -754,6 +760,110 @@ app.post("/updateImagesEtsy", upload.single('csvfile'), async (req, res) => {
             access_token_hbs: access_token,
             shop_id_hbs: shop_id,
             imagesUpdated: true
+        });
+    }
+});
+
+app.post("/updateVideosEtsy", upload.single('csvfile'), async (req, res) => {
+    const { access_token, shop_id, first_name } = req.body;
+    const rowsData = [];
+    const csvErrorsArray = [];
+    let csvCheckCounter = 1;
+
+    const readCSV = new Promise((resolve, reject) => {
+        fs.createReadStream(req.file.path)
+        .pipe(csv())
+        .on('data', (row) => {
+            csvCheckCounter++;
+            if (row['Video File'] && row['Video File'].trim() !== '') {
+                // Append .mp4 to file name if not already present
+                const videoFileName = row['Video File'].endsWith('.mp4') ? row['Video File'] : row['Video File'] + '.mp4';
+                // Update the 'Video File' value in the row with the potentially modified videoFileName
+                row['Video File'] = videoFileName;
+                const filePath = path.join('./listing_video_files/', videoFileName);
+                if (!fs.existsSync(filePath)) {
+                    console.log(`File ${filePath} does not exist`);
+                    csvErrorsArray.push(`Row ${csvCheckCounter}: The .mp4 file from your spreadsheet called ${videoFileName} does not exist within in the app's listing_video_files folder`);
+                }
+            }
+            // Push the row with the updated 'Video File' value to rowsData
+            rowsData.push(row);
+        })
+        .on('end', () => {
+            console.log('CSV file processed');
+            resolve();
+        })
+        .on('error', (error) => {
+            reject(error);
+        });
+    });
+
+    await readCSV;
+
+    if (csvErrorsArray.length > 0) {
+        res.render("welcome", {
+            first_name_hbs: first_name,
+            access_token_hbs: access_token,
+            shop_id_hbs: shop_id,
+            videoCsvErrorsArray: csvErrorsArray
+        });
+        return;
+    }
+
+
+    let rowUploadingCounter = 1;
+    const errorsArray = [];
+
+    for (let i = 0; i < rowsData.length; i++) {
+
+        try {
+
+            rowUploadingCounter++;
+
+            if (rowsData[i]['Video File']) {
+
+                console.log(`Uploading video for row ${rowUploadingCounter}`)
+
+                let apiUrl = `https://openapi.etsy.com/v3/application/shops/${shop_id}/listings/${rowsData[i]['Product ID']}/videos`;
+                let videoFilePath = './listing_video_files/' + rowsData[i]['Video File'];
+
+                // Read the file to be uploaded
+                let videoFileData = await fsPromises.readFile(videoFilePath);
+                // Prepare the form data
+                let videoFormData = new FormData();
+                videoFormData.append('video', videoFileData, rowsData[i]['Video File']);
+                videoFormData.append('name', rowsData[i]['Video File']);
+
+                let result = await videoApiCall(apiUrl, access_token, videoFormData)
+
+                if (result === "Success") {
+                    console.log(`Successfully uploaded video for row ${rowUploadingCounter}`);
+                } else {
+                    throw new Error("Error uploading video");
+                }
+
+            }
+        } catch (error) {
+            console.error(error);
+            const currentRow = i + 2;
+            errorsArray.push(`Row ${currentRow}: There was a problem uploading the video for this row.`);
+        }
+    }
+
+
+    if (errorsArray.length > 0) {
+        res.render("welcome", {
+            first_name_hbs: first_name,
+            access_token_hbs: access_token,
+            shop_id_hbs: shop_id,
+            videoErrorsArray: errorsArray
+        });
+    } else {
+        res.render('welcome', {
+            first_name_hbs: first_name,
+            access_token_hbs: access_token,
+            shop_id_hbs: shop_id,
+            videosUpdated: true
         });
     }
 });
